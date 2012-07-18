@@ -1,0 +1,28 @@
+.thumb {
+  float: left;
+  margin: 5px;
+  padding: 0;
+}
+.thumb a {
+  padding: 0;
+  margin: 0;
+  text-decoration: none;
+  display: block;
+  border: solid black 5px;
+  overflow: hidden;
+  width: 200px;
+  height: 200px;
+}
+.thumb a:hover {
+  border-color: red;
+}
+.thumb img {
+  border: none;
+  display: block;
+}
+body, h1, p, div {
+  text-align: center !important;
+}
+.clear {
+  clear: both;
+}

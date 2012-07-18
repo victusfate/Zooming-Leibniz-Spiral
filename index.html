@@ -1,0 +1,192 @@
+
+<!DOCTYPE html>
+<html>
+  <head>
+
+   <meta charset='utf-8'>
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <link href='https://fonts.googleapis.com/css?family=Chivo:900' rel='stylesheet' type='text/css'>
+    <link rel="stylesheet" type="text/css" href="stylesheets/stylesheet.css" media="screen" />
+    <link rel="stylesheet" type="text/css" href="stylesheets/pygment_trac.css" media="screen" />
+    <link rel="stylesheet" type="text/css" href="stylesheets/print.css" media="print" />
+    <!--[if lt IE 9]>
+    <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+
+    <title>Zooming Leibniz Spiral</title>
+    <!-- <link rel="stylesheet" href="media/style.css"> -->
+    <script src="media/js/d3.min.js"></script>
+    <meta name="author" content="Mark Essel">
+    <style>
+      path { fill: none; }
+      path.spiral { stroke: steelblue; }
+      .axis path, .axis line { stroke: #000; shape-rendering: crispEdges; }
+    </style>
+
+
+
+  </head>
+  <body>
+   <div id="container">
+      <div class="inner">
+        <section id="main_content">
+          <h2>Zooming Leibniz Spiral</h2>
+    <p>Inspired by Jason Davies Leibniz Spiral and Noah Slater's bizarre imagination. My small contribution was merely making it zoom. Watch as the spiral converges on π, using the
+      <a href="http://en.wikipedia.org/wiki/Leibniz_formula_for_pi">Leibniz formula</a>.
+    <div id="vis">
+      <script>
+
+var Y = function(F) {
+    return (function(x) {
+        return F(function(y) {
+            return (x(x))(y);
+        });
+    })(function(x) {
+        return F(function(y) {
+            return (x(x))(y);
+        });
+    });
+};
+
+var LeibnizGen = function (cLS) {
+ return (function(n) {
+  var d = 1 + n * 2, s = n % 2 == 0 ? 1 : -1;
+  return ((n == 0) ? 4 : (s * 4 / d + cLS(n-1))) ;
+ });
+} ;
+
+function log10(val) {
+  return Math.log(val) / Math.log(10);
+}
+
+var zoomValue = 1;
+var dZoom = 1;
+var mouseWheelTimeout = 0;
+var nvals = 50;
+
+function drawLeibnizSpiral(zoomValue) {
+  d3.select("svg").remove();
+  var lval = (zoomValue - 1);
+
+  // if (lval > 7200) {
+  //   lval = 7200; // i hit chrome's call stack size problem here with fixed point combinator comp of leibniz spiral, probably less in other browsers
+  // }
+
+  var logval = log10(lval);
+  var oomShift = parseInt(logval + 0.5);
+  if (oomShift >= 2) {
+    dZoom = 0.5 * Math.pow(10,oomShift - 1);
+  }
+  else {
+    dZoom = 1;
+  }
+  
+
+  var hval = lval + nvals - 1;
+  // var lval = (zoomValue - 1) * nvals;
+  // var hval = lval + nvals - 1;
+  console.log("lval, hval ",lval,hval);
+
+  var ls1 = (Y(LeibnizGen))(lval),
+      ls2 = (Y(LeibnizGen))(lval+1);
+
+  console.log("ls1,ls2 ",ls1,ls2);
+
+  var xMin = Math.min(ls1, ls2);
+  var xMax = Math.max(ls1, ls2);
+  var yMin = -2;
+  var yMax = 2;
+
+  console.log("xMin,xMax,yMin,Max ",xMin,xMax,yMin,yMax);
+
+  var w = 500,
+      h = 475,
+      p = [20, 20, 40, 40],
+      x = d3.scale.linear().domain([xMin, xMax]).range([0, w]),
+      y = d3.scale.linear().domain([yMin, yMax]).range([h, 0]),
+      arc = [],
+      n = nvals,
+      v = 0;
+
+  for (var i=lval; i < hval; i++) {
+    var d = 1 + i * 2,
+      s = i % 2 == 0 ? 1 : -1,
+      dv = s * 4 / d;
+    var v = (Y(LeibnizGen))(i);
+    //console.log("leiby ",v," current value ",dv);
+    if (i != lval) arc.push("A", dv = Math.abs(dv), dv, 0, 0, 0);
+    else arc.push("M");
+    arc.push(x(v), y(0));
+  }
+
+  var vis = d3.select("#vis").append("svg")
+      .attr("width", w + p[1] + p[3])
+      .attr("height", h + p[0] + p[2])
+      .append("g")
+      .attr("transform", "translate(" + p[3] + "," + p[0] + ")");
+
+  vis.append("g")
+      .attr("class", "x axis")
+      .attr("transform", "translate(0," + y(0) + ")")
+      .call(d3.svg.axis().scale(x).orient("bottom").ticks(5));
+
+  vis.append("path")
+      .attr("class", "spiral")
+      .attr("d", arc.join(" "));
+
+}
+
+drawLeibnizSpiral(zoomValue);
+
+document.addEventListener('DOMMouseScroll', onDocumentMouseScroll, false); // FF
+document.addEventListener('mousewheel', onDocumentMouseScroll, false);
+
+function onDocumentMouseScroll( event ){
+    clearTimeout( mouseWheelTimeout );
+
+    mouseWheelTimeout = setTimeout( function() {
+      var delta = event.detail || -event.wheelDelta;
+      if( delta > 0 ) {
+        zoomOut();
+      }
+      else {
+        zoomIn();
+      }
+    }, 20 );
+}
+
+function zoomIn() {
+  // set new zoom
+  zoomValue += dZoom;
+  // redraw spiral and axis
+  drawLeibnizSpiral(zoomValue);
+}
+    
+function zoomOut() {
+  // set new zoom
+  zoomValue -= dZoom;
+  if (zoomValue < 1) {
+    zoomValue = 1;
+  }
+  // redraw spiral and axis
+  drawLeibnizSpiral(zoomValue);
+}
+      </script>
+    </div>
+    <h2>See Also</h2>
+    <ul>
+      <li><a href="http://www.jasondavies.com/leibniz-spiral/">The original Leibniz Spiral</a> by <a href="http://www.jasondavies.com">Jason Davies</a> (@jasondavies).</li>
+      <li><a href="http://groups.google.com/group/whits/msg/11bb6957473f0095">Re: Pi and Units</a> by <a href="http://tumbolia.org/nslater">Noah Slater</a> (@nslater).</li>
+      <li>Tactile theme by <a href="http://twitter.com/jasonlong">Jason Long</a>.</li>
+    </ul>
+    </section>
+
+    <section id="downloads" class="clearfix">
+      <a href="https://github.com/victusfate/Zooming-Leibniz-Spiral/zipball/master" id="download-zip" class="button"><span>Download .zip</span></a>
+      <a href="https://github.com/victusfate/Zooming-Leibniz-Spiral/tarball/master" id="download-tar-gz" class="button"><span>Download .tar.gz</span></a>
+      <a href="https://github.com/victusfate/Zooming-Leibniz-Spiral" id="view-on-github" class="button"><span>View on GitHub</span></a>
+    </section>
+      </div>
+    </div>
+  </body>
+</html>
