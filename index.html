@@ -249,38 +249,40 @@ $("#slider-0-form").on("move", function(event) {
   drawLeibnizSpiral(value);
 });
 
-$(document).on({
-    "mousedown touchstart": function () {
-        $(this).siblings("input").trigger("start");
-    },
-    "mousemove touchmove": function (event) {
-        $(this).siblings("input").trigger("move");
-    },
-    "mouseup touchend": function () {
-        $(this).siblings("input").trigger("stop");
-    }
-}, "svg");
+// can't check swipe up & down?
+// $(document).on({
+//     "mousedown touchstart": function () {
+//         $(this).siblings("input").trigger("start");
+//     },
+//     "mousemove touchmove": function (event) {
+//         $(this).siblings("input").trigger("move");
+//     },
+//     "mouseup touchend": function () {
+//         $(this).siblings("input").trigger("stop");
+//     }
+// }, "svg");
 
-var touchStartXY,touchMoveXY,touchEndXY;
+// var touchStartXY,touchMoveXY,touchEndXY;
 
-$("svg").on("start", function(event) {
-  touchStartXY = { x: x, y: y};
-  var value = event.target.value;
-  drawLeibnizSpiral(value);
-});
+// $("svg").on("start", function(event) {
+//   touchStartXY = { x: x, y: y};
+//   var value = event.target.value;
+//   drawLeibnizSpiral(value);
+// });
 
-$("svg").on("move", function(event) {
-  touchMoveXY = { x: x, y: y};
-  zoomValue += touchMoveXY.y - touchStartXY.y
-  var value = event.target.value;
-  drawLeibnizSpiral(value);
-});
+// $("svg").on("move", function(event) {
+//   touchMoveXY = { x: x, y: y};
+//   zoomValue += touchMoveXY.y - touchStartXY.y
+//   zoomValue += touchMoveXY.x - touchStartXY.x
+//   var value = event.target.value;
+//   drawLeibnizSpiral(value);
+// });
 
-$("svg").on("end", function(event) {
-  touchEndXY = { x: x, y: y};
-  var value = event.target.value;
-  drawLeibnizSpiral(value);
-});
+// $("svg").on("end", function(event) {
+//   touchEndXY = { x: x, y: y};
+//   var value = event.target.value;
+//   drawLeibnizSpiral(value);
+// });
 
 
 // $("#slider-0-form").on("end", function(event) {
