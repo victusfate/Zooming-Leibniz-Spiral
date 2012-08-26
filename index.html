@@ -5,6 +5,11 @@
 
    <meta charset='utf-8'>
     <meta http-equiv="X-UA-Compatible" content="chrome=1">
+
+    <link rel="stylesheet" href="http://code.jquery.com/mobile/1.1.1/jquery.mobile-1.1.1.min.css" />
+    <script src="http://code.jquery.com/jquery-1.7.1.min.js"></script>
+    <script src="http://code.jquery.com/mobile/1.1.1/jquery.mobile-1.1.1.min.js"></script>
+
     <link href='https://fonts.googleapis.com/css?family=Chivo:900' rel='stylesheet' type='text/css'>
     <link rel="stylesheet" type="text/css" href="stylesheets/stylesheet.css" media="screen" />
     <link rel="stylesheet" type="text/css" href="stylesheets/pygment_trac.css" media="screen" />
@@ -20,7 +25,7 @@
     <style>
       path { fill: none; }
       path.spiral { stroke: steelblue; }
-      .axis path, .axis line { stroke: #000; shape-rendering: crispEdges; }
+      .axis path, .axis line { stroke: steelblue; }
     </style>
 
 
@@ -65,7 +70,8 @@ var mouseWheelTimeout = 0;
 var nvals = 50;
 
 function drawLeibnizSpiral(zoomValue) {
-  d3.select("svg").remove();
+  // d3.select("svg").remove();
+
   var lval = (zoomValue - 1);
 
   // if (lval > 7200) {
@@ -118,19 +124,30 @@ function drawLeibnizSpiral(zoomValue) {
     else arc.push("M");
     arc.push(x(v), y(0));
   }
-
-  var vis = d3.select("#vis").append("svg")
+  var vis = d3.select("#vis").select("svg");
+  console.log("vis[0][0] ",vis[0][0], " zoom value ",zoomValue);
+  if (vis[0][0] === undefined || vis[0][0] === null) {
+    vis = d3.select("#vis").append("svg")
       .attr("width", w + p[1] + p[3])
       .attr("height", h + p[0] + p[2])
-      .append("g")
-      .attr("transform", "translate(" + p[3] + "," + p[0] + ")");
+      // .append("g")
+      // .attr("class","gtransform")
+      // .attr("transform", "translate(" + p[3] + "," + p[0] + ")");
 
-  vis.append("g")
-      .attr("class", "x axis")
-      .attr("transform", "translate(0," + y(0) + ")")
-      .call(d3.svg.axis().scale(x).orient("bottom").ticks(5));
+    vis.append("g")
+    vis.append("path")
 
-  vis.append("path")
+  }
+  var yoff = y(0)+p[0];
+  vis.select("g")
+    .attr("transform", "translate(0," + yoff + ")")
+    .transition(200)
+    .call(d3.svg.axis().scale(x).orient("bottom").ticks(5));
+
+
+  vis.select("path")
+      .transition().duration(200)
+      .attr("transform", "translate(0," + -y(0) + ")")
       .attr("class", "spiral")
       .attr("d", arc.join(" "));
 
@@ -138,8 +155,27 @@ function drawLeibnizSpiral(zoomValue) {
 
 drawLeibnizSpiral(zoomValue);
 
+
+// function animateFirstStep(){
+//     d3.select("svg")
+//       .transition()            
+//         .delay(0)            
+//         .duration(1000)
+//         .attr("zoomValue", zoomValue)
+//         .each("end", animateSecondStep);
+// };
+
+// function animateSecondStep(){
+//     d3.select("svg")
+//       .transition()
+//         .duration(1000)
+//         .attr("zoomValue", zoomValue);
+// };
+
+
 document.addEventListener('DOMMouseScroll', onDocumentMouseScroll, false); // FF
 document.addEventListener('mousewheel', onDocumentMouseScroll, false);
+// document.addEventListener('mousedown', onDoctorWho, false);
 
 function onDocumentMouseScroll( event ){
     clearTimeout( mouseWheelTimeout );
@@ -155,9 +191,23 @@ function onDocumentMouseScroll( event ){
     }, 1 );
 }
 
+// function onDoctorWho( event) {
+//   if (zoomValue < 7000 ) {
+//     for (var i=zoomValue;i < 7000;i++)
+//       .data(newData)  
+//         .transition().duration(2000).delay(200)
+//     }
+//   }
+//   else {
+
+//   }
+
+// }
+
 function zoomIn() {
   // set new zoom
   zoomValue += dZoom;
+  $("#slider-0").val(zoomValue).slider("refresh");
   // redraw spiral and axis
   drawLeibnizSpiral(zoomValue);
 }
@@ -168,11 +218,88 @@ function zoomOut() {
   if (zoomValue < 1) {
     zoomValue = 1;
   }
+  $("#slider-0").val(zoomValue).slider("refresh");
+  
   // redraw spiral and axis
   drawLeibnizSpiral(zoomValue);
 }
+
+
+// $( "#slider-0-form" ).slider({
+//   slide: function(event, ui) {
+//     console.log("slider val ",$("slider-0").val());
+//     drawLeibnizSpiral($("slider-0").val());
+//   }
+// });
+
+$(document).on({
+    "mousedown touchstart": function () {
+        $(this).siblings("input").trigger("start");
+    },
+    "mousemove touchmove": function (event) {
+        $(this).siblings("input").trigger("move");
+    },
+    "mouseup touchend": function () {
+        $(this).siblings("input").trigger("stop");
+    }
+}, ".ui-slider");
+
+$("#slider-0-form").on("move", function(event) {
+  var value = event.target.value;
+  drawLeibnizSpiral(value);
+});
+
+$(document).on({
+    "mousedown touchstart": function () {
+        $(this).siblings("input").trigger("start");
+    },
+    "mousemove touchmove": function (event) {
+        $(this).siblings("input").trigger("move");
+    },
+    "mouseup touchend": function () {
+        $(this).siblings("input").trigger("stop");
+    }
+}, "svg");
+
+var touchStartXY,touchMoveXY,touchEndXY;
+
+$("svg").on("start", function(event) {
+  touchStartXY = { x: x, y: y};
+  var value = event.target.value;
+  drawLeibnizSpiral(value);
+});
+
+$("svg").on("move", function(event) {
+  touchMoveXY = { x: x, y: y};
+  zoomValue += touchMoveXY.y - touchStartXY.y
+  var value = event.target.value;
+  drawLeibnizSpiral(value);
+});
+
+$("svg").on("end", function(event) {
+  touchEndXY = { x: x, y: y};
+  var value = event.target.value;
+  drawLeibnizSpiral(value);
+});
+
+
+// $("#slider-0-form").on("end", function(event) {
+//   var value = event.target.value;
+//   drawLeibnizSpiral(value);
+// });
+
+
+
       </script>
+
     </div>
+
+    <form id="slider-0-form">
+       <input type="range" name="slider" id="slider-0" value="1" min="1" max="7000"  />
+    </form>
+
+
+
     <h2>See Also</h2>
     <ul>
       <li><a href="http://www.jasondavies.com/leibniz-spiral/">The original Leibniz Spiral</a> by <a href="http://www.jasondavies.com">Jason Davies</a> (@jasondavies).</li>
